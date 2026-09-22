@@ -103,14 +103,14 @@
         <div class="relative w-full">
           <i class="ph ph-globe-hemisphere-west absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 text-lg pointer-events-none"></i>
           <select id="playlistSelect" class="w-full bg-dark-card border border-dark-border text-sm rounded-xl pl-9 pr-8 py-2 text-slate-200 focus:outline-none focus:border-brand-500 transition-colors cursor-pointer appearance-none">
-            <option value="radios_america_del_sur.m3u8" selected>América del Sur</option>
+            <option value="radios_america_del_sur.m3u8">América del Sur</option>
             <option value="radios_america_del_norte.m3u8">América del Norte</option>
             <option value="radios_europa.m3u8">Europa</option>
             <option value="radios_asia.m3u8">Asia</option>
             <option value="radios_africa.m3u8">África</option>
             <option value="radios_oceania.m3u8">Oceanía</option>
             <option value="radios_otros.m3u8">Otros</option>
-            <option value="radio_garden_global.m3u8">Catálogo Global Completo</option>
+            <option value="radio_garden_global.m3u8" selected>Catálogo Global Completo</option>
             <option value="__custom__">-- Cargar Archivo o URL Propia --</option>
           </select>
           <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -150,28 +150,54 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 flex flex-col gap-6">
 
     <!-- Search & Filter Controls -->
-    <section class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row gap-4 justify-between items-center">
+    <section class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row gap-4 justify-between items-center">
       
       <!-- Live Search Input -->
-      <div class="relative w-full md:w-96">
+      <div class="relative w-full lg:w-80">
         <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
-        <input type="text" id="searchInput" placeholder="Buscar por estación, ciudad o país..." class="w-full bg-dark-card border border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+        <input type="text" id="searchInput" placeholder="Buscar por estación, ciudad..." class="w-full bg-dark-card border border-dark-border rounded-xl pl-10 pr-9 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
         <button id="clearSearchBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
           <i class="ph ph-x-circle text-lg"></i>
         </button>
       </div>
 
-      <!-- Country / Group Filter & Stats -->
-      <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-        <div class="relative min-w-[180px]">
-          <select id="countryFilter" class="w-full bg-dark-card border border-dark-border text-sm rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-brand-500 appearance-none pr-8 cursor-pointer">
+      <!-- Filters: Genre, Country & Stats Counter -->
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+        
+        <!-- NEW: Genre Selector -->
+        <div class="relative min-w-[155px] flex-1 sm:flex-initial">
+          <i class="ph ph-music-notes absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 pointer-events-none"></i>
+          <select id="genreFilter" class="w-full bg-dark-card border border-dark-border text-sm rounded-xl pl-9 pr-8 py-2.5 text-slate-200 focus:outline-none focus:border-brand-500 appearance-none cursor-pointer">
+            <option value="">Todos los Géneros</option>
+            <option value="rock">🎸 Rock & Metal</option>
+            <option value="pop">🎤 Pop & Top Hits</option>
+            <option value="classic">🎻 Clásica / Instrumental</option>
+            <option value="jazz">🎷 Jazz & Blues</option>
+            <option value="electronic">🎧 Electrónica / Dance</option>
+            <option value="chill">☕ Chill & Ambient</option>
+            <option value="latina">💃 Latina / Reggaeton</option>
+            <option value="regional">🎺 Regional / Mariachi</option>
+            <option value="country">🤠 Country / Folk</option>
+            <option value="hiphop">🧢 Hip Hop / Urban</option>
+            <option value="retro">📻 Retro / 80s 90s</option>
+            <option value="news">📰 Noticias / Talk</option>
+            <option value="sports">⚽ Deportes</option>
+            <option value="christian">🕊️ Cristiana / Espiritual</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+        </div>
+
+        <!-- Country / Group Filter -->
+        <div class="relative min-w-[155px] flex-1 sm:flex-initial">
+          <i class="ph ph-globe-hemisphere-east absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 pointer-events-none"></i>
+          <select id="countryFilter" class="w-full bg-dark-card border border-dark-border text-sm rounded-xl pl-9 pr-8 py-2.5 text-slate-200 focus:outline-none focus:border-brand-500 appearance-none cursor-pointer">
             <option value="">Todos los Países</option>
           </select>
-          <i class="ph ph-funnel absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+          <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
         </div>
 
         <!-- Count indicator badge -->
-        <div class="bg-dark-card border border-dark-border px-3 py-2 rounded-xl text-xs font-medium text-slate-300 whitespace-nowrap">
+        <div class="bg-dark-card border border-dark-border px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-300 whitespace-nowrap shrink-0">
           <span id="stationCount" class="text-brand-400 font-bold">0</span> emisoras
         </div>
       </div>
@@ -187,7 +213,7 @@
     <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center gap-2">
       <i class="ph ph-radio text-5xl text-slate-600 mb-2"></i>
       <h3 class="text-base font-semibold text-slate-300">No se encontraron emisoras</h3>
-      <p class="text-xs text-slate-500 max-w-sm">Prueba ajustando los términos de búsqueda o selecciona otra lista.</p>
+      <p class="text-xs text-slate-500 max-w-sm">Prueba ajustando los términos de búsqueda, cambiando el género o seleccionando otra región.</p>
     </div>
 
     <!-- Stations Grid -->
@@ -274,6 +300,66 @@
   <audio id="audioElement" preload="none"></audio>
 
   <script>
+    // Genre keyword definitions for smart categorization
+    const GENRE_DICTIONARY = {
+      rock: {
+        label: "Rock",
+        keywords: ["rock", "metal", "punk", "grunge", "indie", "hard rock", "alternative", "heavy", "prog rock"]
+      },
+      pop: {
+        label: "Pop",
+        keywords: ["pop", "hits", "top 40", "top40", "chart", "billboard", "mainstream", "40 principales"]
+      },
+      classic: {
+        label: "Clásica",
+        keywords: ["classic", "clasic", "instrumental", "symphon", "orchestr", "sinfon", "orquest", "opera", "filarmon", "baroque", "mozart", "beethoven", "bach", "piano"]
+      },
+      jazz: {
+        label: "Jazz",
+        keywords: ["jazz", "blues", "soul", "swing", "bossa", "smooth jazz", "bebop", "motown"]
+      },
+      electronic: {
+        label: "Electro",
+        keywords: ["electronic", "dance", "house", "techno", "trance", "edm", "club", "rave", "dj", "ibiza", "synth", "hardstyle", "drum and bass", "dnb"]
+      },
+      chill: {
+        label: "Chill",
+        keywords: ["chill", "ambient", "lounge", "relax", "lo-fi", "lofi", "meditation", "spa", "downtempo", "deep focus"]
+      },
+      latina: {
+        label: "Latina",
+        keywords: ["latina", "latino", "salsa", "cumbia", "reggaeton", "bachata", "merengue", "vallenato", "tropical", "urbano latino"]
+      },
+      regional: {
+        label: "Regional",
+        keywords: ["banda", "norteña", "nortena", "mariachi", "ranchera", "grupero", "corridos", "regional", "folklore", "huapango", "zapateado"]
+      },
+      country: {
+        label: "Country",
+        keywords: ["country", "bluegrass", "americana", "folk", "acoustic", "nashville"]
+      },
+      hiphop: {
+        label: "Hip Hop",
+        keywords: ["hip hop", "hiphop", "hip-hop", "rap", "trap", "r&b", "urban", "boom bap"]
+      },
+      retro: {
+        label: "Retro",
+        keywords: ["80s", "90s", "70s", "60s", "oldies", "retro", "recuerdos", "vintage", "golden", "clásicos", "nostalgia", "flashback", "inolvidable"]
+      },
+      news: {
+        label: "Noticias",
+        keywords: ["news", "noticias", "noticia", "talk", "parole", "habla", "info", "información", "informacion", "debate", "bbc", "npr", "rfi", "cadena ser", "radio nacional"]
+      },
+      sports: {
+        label: "Deportes",
+        keywords: ["sport", "deporte", "deportes", "futbol", "soccer", "espn", "radio marca", "deportiva"]
+      },
+      christian: {
+        label: "Cristiana",
+        keywords: ["cristian", "christian", "gospel", "jesus", "jesús", "catolica", "católica", "fe", "radio maria", "adoracion", "evangelica", "evangélica", "praise"]
+      }
+    };
+
     // State management
     const state = {
       allStations: [],
@@ -296,6 +382,7 @@
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const countryFilter = document.getElementById('countryFilter');
+    const genreFilter = document.getElementById('genreFilter');
     const stationsGrid = document.getElementById('stationsGrid');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
     const stationCount = document.getElementById('stationCount');
@@ -322,7 +409,24 @@
     const visualizer = document.getElementById('visualizer');
 
     /**
-     * Efficient Line-by-line M3U/M3U8 Parser
+     * Determines genres based on station title and raw metadata
+     */
+    function detectGenres(titleText) {
+      const lower = titleText.toLowerCase();
+      const detected = [];
+      for (const [key, meta] of Object.entries(GENRE_DICTIONARY)) {
+        for (const kw of meta.keywords) {
+          if (lower.includes(kw)) {
+            detected.push(key);
+            break;
+          }
+        }
+      }
+      return detected;
+    }
+
+    /**
+     * STREAMING_CHUNK:Parsing line-by-line M3U8 with genre detection...
      */
     function parseM3U8(content) {
       const lines = content.split(/\r?\n/);
@@ -334,7 +438,6 @@
         if (!line) continue;
 
         if (line.startsWith('#EXTINF:')) {
-          // Parse EXTINF line
           const firstComma = line.indexOf(',');
           const metaPart = firstComma !== -1 ? line.substring(0, firstComma) : line;
           const rawTitle = firstComma !== -1 ? line.substring(firstComma + 1).trim() : 'Estación de Radio';
@@ -346,7 +449,6 @@
           const groupMatch = metaPart.match(/group-title="([^"]*)"/i);
           const countryMatch = metaPart.match(/tvg-country="([^"]*)"/i);
 
-          // Infer city and country from title "(City - Country)" or group-title
           let city = '';
           let country = '';
           const group = groupMatch ? groupMatch[1] : '';
@@ -366,10 +468,13 @@
               const p = inner.split('-');
               city = city || p[0].trim();
               country = country || p[1].trim();
+            } else if (inner.includes(',')) {
+              const p = inner.split(',');
+              city = city || p[0].trim();
+              country = country || p[1].trim();
             }
           }
 
-          // Clean station title
           let cleanTitle = rawTitle;
           if (parenMatch) {
             cleanTitle = rawTitle.substring(0, parenMatch.index).trim();
@@ -379,6 +484,7 @@
           }
 
           const id = idMatch ? idMatch[1] : `st_${stations.length}`;
+          const genres = detectGenres(`${cleanTitle} ${rawTitle}`);
 
           currentInfo = {
             id: id,
@@ -387,10 +493,10 @@
             country: country || 'Global',
             countryCode: countryMatch ? countryMatch[1] : '',
             logo: logoMatch ? logoMatch[1] : '',
-            rawTitle: rawTitle
+            rawTitle: rawTitle,
+            genres: genres
           };
         } else if (!line.startsWith('#') && currentInfo) {
-          // Found stream URL
           currentInfo.streamUrl = line;
           stations.push(currentInfo);
           currentInfo = null;
@@ -411,12 +517,10 @@
 
       try {
         let response = null;
-        // Try relative path first (direct GitHub Pages deployment)
         try {
           response = await fetch(fileNameOrUrl);
           if (!response.ok) throw new Error('Status not ok');
         } catch (e) {
-          // Fallback to Raw GitHub if testing from another origin or localhost
           const fallbackUrl = `https://raw.githubusercontent.com/SamHithub/radiogarden/main/${fileNameOrUrl}`;
           response = await fetch(fallbackUrl);
         }
@@ -457,11 +561,12 @@
     }
 
     /**
-     * Filters stations by search term, country, and favorites
+     * STREAMING_CHUNK:Filtering stations by search, country, and genre...
      */
     function applyFilters() {
       const query = searchInput.value.trim().toLowerCase();
       const selectedCountry = countryFilter.value;
+      const selectedGenre = genreFilter.value;
 
       state.filteredStations = state.allStations.filter(st => {
         if (state.showOnlyFavorites && !state.favorites.has(st.id)) {
@@ -469,6 +574,14 @@
         }
         if (selectedCountry && st.country !== selectedCountry) {
           return false;
+        }
+        if (selectedGenre) {
+          // Check pre-computed genres or keywords in full title
+          const matchesGenre = st.genres.includes(selectedGenre) || 
+            (GENRE_DICTIONARY[selectedGenre] && GENRE_DICTIONARY[selectedGenre].keywords.some(kw => 
+              st.title.toLowerCase().includes(kw) || st.rawTitle.toLowerCase().includes(kw)
+            ));
+          if (!matchesGenre) return false;
         }
         if (query) {
           const matchTitle = st.title.toLowerCase().includes(query);
@@ -495,7 +608,7 @@
     }
 
     /**
-     * Renders a batch of cards for high performance
+     * STREAMING_CHUNK:Rendering batch cards with genre pills and controls...
      */
     function renderNextBatch() {
       const start = state.displayedCount;
@@ -508,6 +621,12 @@
         const realIndex = start + index;
         const isPlaying = state.currentStation && state.currentStation.id === station.id && !audioElement.paused;
         const isFav = state.favorites.has(station.id);
+
+        // First detected genre badge
+        const primaryGenreKey = station.genres[0];
+        const genreBadge = primaryGenreKey && GENRE_DICTIONARY[primaryGenreKey]
+          ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20">${GENRE_DICTIONARY[primaryGenreKey].label}</span>`
+          : '';
 
         const card = document.createElement('div');
         card.className = `group bg-dark-card hover:bg-dark-surface border ${
@@ -537,8 +656,11 @@
               <p class="text-xs text-slate-400 truncate mt-0.5">
                 ${station.city}
               </p>
-              <div class="inline-block mt-1 px-2 py-0.5 bg-dark-bg/80 border border-dark-border text-slate-400 rounded-md text-[10px] font-medium">
-                ${station.country}
+              <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                <span class="inline-block px-2 py-0.5 bg-dark-bg/80 border border-dark-border text-slate-400 rounded-md text-[10px] font-medium">
+                  ${station.country}
+                </span>
+                ${genreBadge}
               </div>
             </div>
 
@@ -589,7 +711,7 @@
     }
 
     /**
-     * Handles Audio Streaming (supports direct MP3, AAC, and HLS .m3u8)
+     * Handles Audio Streaming
      */
     function playStation(station, index) {
       if (!station || !station.streamUrl) return;
@@ -597,7 +719,6 @@
       state.currentStation = station;
       state.currentIndex = index !== undefined ? index : state.filteredStations.findIndex(s => s.id === station.id);
 
-      // Update Player UI
       playerTitle.textContent = station.title;
       playerSubtitle.textContent = `${station.city} - ${station.country}`;
       playerStatus.textContent = 'Conectando con la estación...';
@@ -605,7 +726,6 @@
       visualizer.classList.remove('opacity-100');
       visualizer.classList.add('opacity-0');
 
-      // Update logo
       if (station.logo) {
         playerThumb.innerHTML = `<img src="${station.logo}" class="w-full h-full object-cover">`;
       } else {
@@ -614,7 +734,6 @@
 
       updatePlayerFavIcon();
 
-      // Teardown previous Hls instance
       if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
@@ -640,17 +759,15 @@
         });
         state.hlsInstance = hls;
       } else {
-        // Native stream (MP3/AAC/Radio Garden redirection)
         audioElement.src = url;
         audioElement.play().catch(handlePlayError);
       }
 
-      // Update MediaSession for Android/iOS/Windows
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: station.title,
           artist: `${station.city}, ${station.country}`,
-          album: 'Radio Garden Live',
+          album: 'Radio Global Live',
           artwork: station.logo ? [{ src: station.logo, sizes: '192x192', type: 'image/png' }] : []
         });
 
@@ -708,7 +825,6 @@
       if (state.showOnlyFavorites) {
         applyFilters();
       } else {
-        // Update heart/star in current cards
         const card = document.querySelector(`[data-id="${stationId}"]`);
         if (card) {
           const icon = card.querySelector('.fav-btn i');
@@ -833,6 +949,7 @@
     });
 
     countryFilter.addEventListener('change', applyFilters);
+    genreFilter.addEventListener('change', applyFilters);
     loadMoreBtn.addEventListener('click', renderNextBatch);
 
     // Toggle Favorites Mode
@@ -883,7 +1000,6 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       updateFavBadge();
-      // Load default region (América del Sur)
       loadPlaylist(playlistSelect.value);
     });
   </script>
