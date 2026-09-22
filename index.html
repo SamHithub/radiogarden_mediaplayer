@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radio Garden Web Player | SamHithub</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              glow: '#00f5a0'
+            },
+            dark: {
+              bg: '#090d16',
+              surface: '#111827',
+              card: '#162032',
+              border: '#1f293d'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- HLS.js for HLS streams -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f293d;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+
+    /* Wave visualizer animation */
+    .eq-bar {
+      transition: height 0.15s ease;
+      animation: eqPulse 1.2s ease-in-out infinite alternate;
+    }
+    .eq-bar:nth-child(1) { animation-delay: 0.1s; }
+    .eq-bar:nth-child(2) { animation-delay: 0.3s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.5s; }
+    .eq-bar:nth-child(4) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(5) { animation-delay: 0.4s; }
+
+    @keyframes eqPulse {
+      0% { height: 20%; }
+      50% { height: 95%; }
+      100% { height: 35%; }
+    }
+  </style>
+</head>
+
+<body class="bg-dark-bg text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-black pb-28">
+
+  <!-- Top Header Navigation -->
+  <header class="sticky top-0 z-40 bg-dark-bg/80 backdrop-blur-md border-b border-dark-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-glow p-[2px] shadow-lg shadow-brand-500/20">
+          <div class="w-full h-full bg-dark-bg rounded-[10px] flex items-center justify-center">
+            <i class="ph-bold ph-broadcast text-xl text-brand-400"></i>
+          </div>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-none">
+            Radio Garden Player
+          </h1>
+          <p class="text-xs text-slate-400 font-medium">SamHithub Edition</p>
+        </div>
+      </div>
+
+      <!-- Region Playlist Selector -->
+      <div class="flex items-center gap-2 max-w-sm w-full">
+        <label for="playlistSelect" class="sr-only">Seleccionar Región</label>
+        <div class="relative w-full">
+          <i class="ph ph-globe-hemisphere-west absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 text-lg pointer-events-none"></i>
+          <select id="playlistSelect" class="w-full bg-dark-card border border-dark-border text-sm rounded-xl pl-9 pr-8 py-2 text-slate-200 focus:outline-none focus:border-brand-500 transition-colors cursor-pointer appearance-none">
+            <option value="radios_america_del_sur.m3u8" selected>América del Sur</option>
+            <option value="radios_america_del_norte.m3u8">América del Norte</option>
+            <option value="radios_europa.m3u8">Europa</option>
+            <option value="radios_asia.m3u8">Asia</option>
+            <option value="radios_africa.m3u8">África</option>
+            <option value="radios_oceania.m3u8">Oceanía</option>
+            <option value="radios_otros.m3u8">Otros</option>
+            <option value="radio_garden_global.m3u8">Catálogo Global Completo</option>
+            <option value="__custom__">-- Cargar Archivo o URL Propia --</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        </div>
+      </div>
+
+      <!-- Custom Actions & Favorites toggle -->
+      <div class="flex items-center gap-2">
+        <button id="toggleFavoritesBtn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-dark-card border border-dark-border text-slate-300 hover:text-amber-400 hover:border-amber-400/40 transition">
+          <i class="ph-fill ph-star text-amber-400"></i>
+          <span class="hidden sm:inline">Favoritos</span>
+          <span id="favCountBadge" class="bg-amber-400/20 text-amber-300 text-xs px-1.5 py-0.5 rounded-full font-bold">0</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Custom File / URL Loader Bar (Conditional) -->
+  <section id="customInputBar" class="hidden bg-dark-card border-b border-dark-border p-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
+      <div class="flex-1 min-w-[280px]">
+        <input type="text" id="customUrlInput" placeholder="Pega una URL https://... de un archivo .m3u o .m3u8" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+      </div>
+      <button id="loadCustomUrlBtn" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-black font-semibold text-sm rounded-xl transition shadow">
+        Cargar URL
+      </button>
+      <span class="text-xs text-slate-400">o</span>
+      <label class="px-4 py-2 bg-dark-surface hover:bg-dark-border text-slate-200 border border-dark-border text-sm rounded-xl cursor-pointer transition">
+        Subir archivo local
+        <input type="file" id="localFileInput" accept=".m3u,.m3u8" class="hidden">
+      </label>
+    </div>
+  </section>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 flex flex-col gap-6">
+
+    <!-- Search & Filter Controls -->
+    <section class="bg-dark-surface border border-dark-border rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row gap-4 justify-between items-center">
+      
+      <!-- Live Search Input -->
+      <div class="relative w-full md:w-96">
+        <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+        <input type="text" id="searchInput" placeholder="Buscar por estación, ciudad o país..." class="w-full bg-dark-card border border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+        <button id="clearSearchBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+          <i class="ph ph-x-circle text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Country / Group Filter & Stats -->
+      <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+        <div class="relative min-w-[180px]">
+          <select id="countryFilter" class="w-full bg-dark-card border border-dark-border text-sm rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-brand-500 appearance-none pr-8 cursor-pointer">
+            <option value="">Todos los Países</option>
+          </select>
+          <i class="ph ph-funnel absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        </div>
+
+        <!-- Count indicator badge -->
+        <div class="bg-dark-card border border-dark-border px-3 py-2 rounded-xl text-xs font-medium text-slate-300 whitespace-nowrap">
+          <span id="stationCount" class="text-brand-400 font-bold">0</span> emisoras
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading and Alert Feedback -->
+    <div id="loaderState" class="hidden flex-col items-center justify-center py-20 text-center gap-3">
+      <div class="w-12 h-12 border-4 border-dark-border border-t-brand-400 rounded-full animate-spin"></div>
+      <p class="text-slate-300 font-medium">Descargando y procesando lista M3U8...</p>
+      <p class="text-xs text-slate-500">Esto tomará sólo un momento</p>
+    </div>
+
+    <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center gap-2">
+      <i class="ph ph-radio text-5xl text-slate-600 mb-2"></i>
+      <h3 class="text-base font-semibold text-slate-300">No se encontraron emisoras</h3>
+      <p class="text-xs text-slate-500 max-w-sm">Prueba ajustando los términos de búsqueda o selecciona otra lista.</p>
+    </div>
+
+    <!-- Stations Grid -->
+    <section id="stationsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <!-- Station cards injected dynamically -->
+    </section>
+
+    <!-- Load More Pagination Button for performance -->
+    <div class="flex justify-center mt-4">
+      <button id="loadMoreBtn" class="hidden px-6 py-2.5 bg-dark-card hover:bg-dark-surface border border-dark-border text-slate-200 text-sm font-medium rounded-xl transition">
+        Cargar más emisoras...
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Fixed Bottom Audio Player -->
+  <aside class="fixed bottom-0 left-0 right-0 z-50 bg-dark-surface/95 backdrop-blur-xl border-t border-dark-border px-4 py-3 shadow-2xl">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      
+      <!-- Station Metadata / Info -->
+      <div class="flex items-center gap-3 w-full sm:w-1/3 min-w-0">
+        <div id="playerThumb" class="w-12 h-12 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center overflow-hidden shrink-0 shadow">
+          <i class="ph-fill ph-radio text-brand-400 text-2xl"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h4 id="playerTitle" class="text-sm font-semibold text-white truncate leading-snug">
+            Selecciona una radio
+          </h4>
+          <p id="playerSubtitle" class="text-xs text-slate-400 truncate">
+            Listo para sintonizar
+          </p>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span id="playerLiveBadge" class="hidden inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span> EN VIVO
+            </span>
+            <span id="playerStatus" class="text-[11px] text-slate-500 truncate"></span>
+          </div>
+        </div>
+        <!-- Favorite toggle in player -->
+        <button id="playerFavBtn" class="p-2 text-slate-400 hover:text-amber-400 transition" title="Marcar como favorito">
+          <i class="ph ph-star text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Playback Actions -->
+      <div class="flex flex-col items-center gap-1.5">
+        <div class="flex items-center gap-4">
+          <button id="prevBtn" class="p-2 text-slate-400 hover:text-white transition" title="Emisora anterior">
+            <i class="ph-fill ph-skip-back text-lg"></i>
+          </button>
+          
+          <button id="playBtn" class="w-12 h-12 rounded-full bg-gradient-to-tr from-brand-600 to-brand-glow text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg shadow-brand-500/30">
+            <i id="playIcon" class="ph-fill ph-play text-xl ml-0.5"></i>
+          </button>
+          
+          <button id="nextBtn" class="p-2 text-slate-400 hover:text-white transition" title="Emisora siguiente">
+            <i class="ph-fill ph-skip-forward text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Equalizer Sound Wave Visualizer -->
+        <div id="visualizer" class="flex items-end gap-1 h-3 opacity-0 transition-opacity">
+          <span class="eq-bar w-1 bg-brand-400 rounded-full h-1"></span>
+          <span class="eq-bar w-1 bg-brand-400 rounded-full h-1"></span>
+          <span class="eq-bar w-1 bg-brand-400 rounded-full h-1"></span>
+          <span class="eq-bar w-1 bg-brand-400 rounded-full h-1"></span>
+          <span class="eq-bar w-1 bg-brand-400 rounded-full h-1"></span>
+        </div>
+      </div>
+
+      <!-- Volume & Options -->
+      <div class="flex items-center justify-end gap-3 w-full sm:w-1/3">
+        <button id="muteBtn" class="text-slate-400 hover:text-white transition">
+          <i id="volumeIcon" class="ph-fill ph-speaker-high text-xl"></i>
+        </button>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.02" value="0.9" class="w-24 accent-brand-500 bg-dark-card cursor-pointer">
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Audio Element -->
+  <audio id="audioElement" preload="none"></audio>
+
+  <script>
+    // State management
+    const state = {
+      allStations: [],
+      filteredStations: [],
+      displayedCount: 0,
+      pageSize: 48,
+      currentStation: null,
+      currentIndex: -1,
+      favorites: new Set(JSON.parse(localStorage.getItem('rg_favs') || '[]')),
+      showOnlyFavorites: false,
+      hlsInstance: null
+    };
+
+    // DOM Elements
+    const playlistSelect = document.getElementById('playlistSelect');
+    const customInputBar = document.getElementById('customInputBar');
+    const customUrlInput = document.getElementById('customUrlInput');
+    const loadCustomUrlBtn = document.getElementById('loadCustomUrlBtn');
+    const localFileInput = document.getElementById('localFileInput');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const countryFilter = document.getElementById('countryFilter');
+    const stationsGrid = document.getElementById('stationsGrid');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const stationCount = document.getElementById('stationCount');
+    const loaderState = document.getElementById('loaderState');
+    const emptyState = document.getElementById('emptyState');
+    const toggleFavoritesBtn = document.getElementById('toggleFavoritesBtn');
+    const favCountBadge = document.getElementById('favCountBadge');
+
+    // Audio & Player Elements
+    const audioElement = document.getElementById('audioElement');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const volumeIcon = document.getElementById('volumeIcon');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const playerThumb = document.getElementById('playerThumb');
+    const playerTitle = document.getElementById('playerTitle');
+    const playerSubtitle = document.getElementById('playerSubtitle');
+    const playerLiveBadge = document.getElementById('playerLiveBadge');
+    const playerStatus = document.getElementById('playerStatus');
+    const playerFavBtn = document.getElementById('playerFavBtn');
+    const visualizer = document.getElementById('visualizer');
+
+    /**
+     * Efficient Line-by-line M3U/M3U8 Parser
+     */
+    function parseM3U8(content) {
+      const lines = content.split(/\r?\n/);
+      const stations = [];
+      let currentInfo = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        if (line.startsWith('#EXTINF:')) {
+          // Parse EXTINF line
+          const firstComma = line.indexOf(',');
+          const metaPart = firstComma !== -1 ? line.substring(0, firstComma) : line;
+          const rawTitle = firstComma !== -1 ? line.substring(firstComma + 1).trim() : 'Estación de Radio';
+
+          // Extract attributes via Regex
+          const idMatch = metaPart.match(/tvg-id="([^"]*)"/i);
+          const nameMatch = metaPart.match(/tvg-name="([^"]*)"/i);
+          const logoMatch = metaPart.match(/tvg-logo="([^"]*)"/i);
+          const groupMatch = metaPart.match(/group-title="([^"]*)"/i);
+          const countryMatch = metaPart.match(/tvg-country="([^"]*)"/i);
+
+          // Infer city and country from title "(City - Country)" or group-title
+          let city = '';
+          let country = '';
+          const group = groupMatch ? groupMatch[1] : '';
+
+          if (group.includes('-')) {
+            const parts = group.split('-');
+            country = parts[0].trim();
+            city = parts.slice(1).join('-').trim();
+          } else {
+            country = group.trim();
+          }
+
+          const parenMatch = rawTitle.match(/\((.*?)\)$/);
+          if (parenMatch) {
+            const inner = parenMatch[1];
+            if (inner.includes('-')) {
+              const p = inner.split('-');
+              city = city || p[0].trim();
+              country = country || p[1].trim();
+            }
+          }
+
+          // Clean station title
+          let cleanTitle = rawTitle;
+          if (parenMatch) {
+            cleanTitle = rawTitle.substring(0, parenMatch.index).trim();
+          }
+          if (nameMatch && nameMatch[1]) {
+            cleanTitle = nameMatch[1];
+          }
+
+          const id = idMatch ? idMatch[1] : `st_${stations.length}`;
+
+          currentInfo = {
+            id: id,
+            title: cleanTitle || 'Radio',
+            city: city || 'En vivo',
+            country: country || 'Global',
+            countryCode: countryMatch ? countryMatch[1] : '',
+            logo: logoMatch ? logoMatch[1] : '',
+            rawTitle: rawTitle
+          };
+        } else if (!line.startsWith('#') && currentInfo) {
+          // Found stream URL
+          currentInfo.streamUrl = line;
+          stations.push(currentInfo);
+          currentInfo = null;
+        }
+      }
+
+      return stations;
+    }
+
+    /**
+     * Loads playlist from relative path or GitHub raw
+     */
+    async function loadPlaylist(fileNameOrUrl) {
+      loaderState.classList.remove('hidden');
+      stationsGrid.innerHTML = '';
+      emptyState.classList.add('hidden');
+      loadMoreBtn.classList.add('hidden');
+
+      try {
+        let response = null;
+        // Try relative path first (direct GitHub Pages deployment)
+        try {
+          response = await fetch(fileNameOrUrl);
+          if (!response.ok) throw new Error('Status not ok');
+        } catch (e) {
+          // Fallback to Raw GitHub if testing from another origin or localhost
+          const fallbackUrl = `https://raw.githubusercontent.com/SamHithub/radiogarden/main/${fileNameOrUrl}`;
+          response = await fetch(fallbackUrl);
+        }
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const text = await response.text();
+        state.allStations = parseM3U8(text);
+        
+        populateCountryFilter();
+        applyFilters();
+      } catch (err) {
+        console.error('Error loading playlist:', err);
+        loaderState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        emptyState.querySelector('h3').textContent = 'Error al cargar la lista M3U8';
+        emptyState.querySelector('p').textContent = 'Verifica que el archivo exista en el repositorio o proporciona una URL válida.';
+      }
+    }
+
+    /**
+     * Extracts unique countries to build filter dropdown
+     */
+    function populateCountryFilter() {
+      const countries = new Set();
+      state.allStations.forEach(st => {
+        if (st.country && st.country !== 'Global') countries.add(st.country);
+      });
+
+      const sorted = Array.from(countries).sort((a, b) => a.localeCompare(b));
+      countryFilter.innerHTML = '<option value="">Todos los Países</option>';
+      sorted.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        countryFilter.appendChild(opt);
+      });
+    }
+
+    /**
+     * Filters stations by search term, country, and favorites
+     */
+    function applyFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      const selectedCountry = countryFilter.value;
+
+      state.filteredStations = state.allStations.filter(st => {
+        if (state.showOnlyFavorites && !state.favorites.has(st.id)) {
+          return false;
+        }
+        if (selectedCountry && st.country !== selectedCountry) {
+          return false;
+        }
+        if (query) {
+          const matchTitle = st.title.toLowerCase().includes(query);
+          const matchCity = st.city.toLowerCase().includes(query);
+          const matchCountry = st.country.toLowerCase().includes(query);
+          return matchTitle || matchCity || matchCountry;
+        }
+        return true;
+      });
+
+      stationCount.textContent = state.filteredStations.length.toLocaleString();
+      loaderState.classList.add('hidden');
+
+      state.displayedCount = 0;
+      stationsGrid.innerHTML = '';
+
+      if (state.filteredStations.length === 0) {
+        emptyState.classList.remove('hidden');
+        loadMoreBtn.classList.add('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        renderNextBatch();
+      }
+    }
+
+    /**
+     * Renders a batch of cards for high performance
+     */
+    function renderNextBatch() {
+      const start = state.displayedCount;
+      const end = Math.min(start + state.pageSize, state.filteredStations.length);
+      const batch = state.filteredStations.slice(start, end);
+
+      const fragment = document.createDocumentFragment();
+
+      batch.forEach((station, index) => {
+        const realIndex = start + index;
+        const isPlaying = state.currentStation && state.currentStation.id === station.id && !audioElement.paused;
+        const isFav = state.favorites.has(station.id);
+
+        const card = document.createElement('div');
+        card.className = `group bg-dark-card hover:bg-dark-surface border ${
+          isPlaying ? 'border-brand-500 bg-brand-500/5' : 'border-dark-border hover:border-slate-700'
+        } rounded-2xl p-4 transition duration-200 flex flex-col justify-between gap-3 shadow-md hover:shadow-xl relative`;
+        card.setAttribute('data-id', station.id);
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3">
+            <!-- Station Avatar/Logo -->
+            <div class="w-12 h-12 rounded-xl bg-dark-bg border border-dark-border flex items-center justify-center shrink-0 overflow-hidden relative">
+              ${
+                station.logo 
+                  ? `<img src="${station.logo}" alt="${station.title}" class="w-full h-full object-cover" onerror="this.src=''; this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">`
+                  : ''
+              }
+              <span class="${station.logo ? 'hidden' : ''} text-brand-400 font-bold text-sm">
+                ${station.title.substring(0, 2).toUpperCase()}
+              </span>
+            </div>
+
+            <!-- Station Info -->
+            <div class="min-w-0 flex-1">
+              <h3 class="text-sm font-semibold text-slate-100 truncate group-hover:text-brand-400 transition" title="${station.title}">
+                ${station.title}
+              </h3>
+              <p class="text-xs text-slate-400 truncate mt-0.5">
+                ${station.city}
+              </p>
+              <div class="inline-block mt-1 px-2 py-0.5 bg-dark-bg/80 border border-dark-border text-slate-400 rounded-md text-[10px] font-medium">
+                ${station.country}
+              </div>
+            </div>
+
+            <!-- Favorite toggle button -->
+            <button class="fav-btn text-slate-500 hover:text-amber-400 transition p-1" title="Favorito">
+              <i class="${isFav ? 'ph-fill ph-star text-amber-400' : 'ph ph-star'} text-lg"></i>
+            </button>
+          </div>
+
+          <!-- Play Action Trigger -->
+          <div class="flex items-center justify-between pt-2 border-t border-dark-border/60">
+            <span class="text-[11px] text-slate-500 font-mono">EN VIVO</span>
+            <button class="play-card-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
+              isPlaying ? 'bg-brand-500 text-black' : 'bg-dark-bg border border-dark-border text-slate-200 hover:border-brand-500'
+            } transition">
+              <i class="ph-fill ${isPlaying ? 'ph-pause' : 'ph-play'}"></i>
+              <span>${isPlaying ? 'Pausar' : 'Escuchar'}</span>
+            </button>
+          </div>
+        `;
+
+        // Card button events
+        card.querySelector('.play-card-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePlayStation(station, realIndex);
+        });
+
+        card.querySelector('.fav-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFavorite(station.id);
+        });
+
+        card.addEventListener('click', () => {
+          togglePlayStation(station, realIndex);
+        });
+
+        fragment.appendChild(card);
+      });
+
+      stationsGrid.appendChild(fragment);
+      state.displayedCount = end;
+
+      if (state.displayedCount < state.filteredStations.length) {
+        loadMoreBtn.classList.remove('hidden');
+      } else {
+        loadMoreBtn.classList.add('hidden');
+      }
+    }
+
+    /**
+     * Handles Audio Streaming (supports direct MP3, AAC, and HLS .m3u8)
+     */
+    function playStation(station, index) {
+      if (!station || !station.streamUrl) return;
+
+      state.currentStation = station;
+      state.currentIndex = index !== undefined ? index : state.filteredStations.findIndex(s => s.id === station.id);
+
+      // Update Player UI
+      playerTitle.textContent = station.title;
+      playerSubtitle.textContent = `${station.city} - ${station.country}`;
+      playerStatus.textContent = 'Conectando con la estación...';
+      playerLiveBadge.classList.add('hidden');
+      visualizer.classList.remove('opacity-100');
+      visualizer.classList.add('opacity-0');
+
+      // Update logo
+      if (station.logo) {
+        playerThumb.innerHTML = `<img src="${station.logo}" class="w-full h-full object-cover">`;
+      } else {
+        playerThumb.innerHTML = `<span class="text-brand-400 font-bold text-base">${station.title.substring(0, 2).toUpperCase()}</span>`;
+      }
+
+      updatePlayerFavIcon();
+
+      // Teardown previous Hls instance
+      if (state.hlsInstance) {
+        state.hlsInstance.destroy();
+        state.hlsInstance = null;
+      }
+
+      const url = station.streamUrl;
+      const isHls = url.includes('.m3u8');
+
+      if (isHls && Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true
+        });
+        hls.loadSource(url);
+        hls.attachMedia(audioElement);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          audioElement.play().catch(handlePlayError);
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            playerStatus.textContent = 'Error al sintonizar stream HLS';
+          }
+        });
+        state.hlsInstance = hls;
+      } else {
+        // Native stream (MP3/AAC/Radio Garden redirection)
+        audioElement.src = url;
+        audioElement.play().catch(handlePlayError);
+      }
+
+      // Update MediaSession for Android/iOS/Windows
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: station.title,
+          artist: `${station.city}, ${station.country}`,
+          album: 'Radio Garden Live',
+          artwork: station.logo ? [{ src: station.logo, sizes: '192x192', type: 'image/png' }] : []
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => audioElement.play());
+        navigator.mediaSession.setActionHandler('pause', () => audioElement.pause());
+        navigator.mediaSession.setActionHandler('previoustrack', () => playPrevStation());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playNextStation());
+      }
+
+      refreshGridPlayingState();
+    }
+
+    function togglePlayStation(station, index) {
+      if (state.currentStation && state.currentStation.id === station.id) {
+        if (audioElement.paused) {
+          audioElement.play().catch(handlePlayError);
+        } else {
+          audioElement.pause();
+        }
+      } else {
+        playStation(station, index);
+      }
+    }
+
+    function handlePlayError(err) {
+      console.warn('Playback error or blocked by autoplay policy:', err);
+      playerStatus.textContent = 'Haz clic en Play para iniciar';
+      playIcon.className = 'ph-fill ph-play text-xl ml-0.5';
+    }
+
+    function playNextStation() {
+      if (state.filteredStations.length === 0) return;
+      let nextIndex = state.currentIndex + 1;
+      if (nextIndex >= state.filteredStations.length) nextIndex = 0;
+      playStation(state.filteredStations[nextIndex], nextIndex);
+    }
+
+    function playPrevStation() {
+      if (state.filteredStations.length === 0) return;
+      let prevIndex = state.currentIndex - 1;
+      if (prevIndex < 0) prevIndex = state.filteredStations.length - 1;
+      playStation(state.filteredStations[prevIndex], prevIndex);
+    }
+
+    function toggleFavorite(stationId) {
+      if (state.favorites.has(stationId)) {
+        state.favorites.delete(stationId);
+      } else {
+        state.favorites.add(stationId);
+      }
+      localStorage.setItem('rg_favs', JSON.stringify(Array.from(state.favorites)));
+      updateFavBadge();
+      updatePlayerFavIcon();
+
+      if (state.showOnlyFavorites) {
+        applyFilters();
+      } else {
+        // Update heart/star in current cards
+        const card = document.querySelector(`[data-id="${stationId}"]`);
+        if (card) {
+          const icon = card.querySelector('.fav-btn i');
+          const isFav = state.favorites.has(stationId);
+          icon.className = isFav ? 'ph-fill ph-star text-amber-400' : 'ph ph-star';
+        }
+      }
+    }
+
+    function updateFavBadge() {
+      favCountBadge.textContent = state.favorites.size;
+    }
+
+    function updatePlayerFavIcon() {
+      if (!state.currentStation) return;
+      const isFav = state.favorites.has(state.currentStation.id);
+      playerFavBtn.innerHTML = `<i class="${isFav ? 'ph-fill ph-star text-amber-400' : 'ph ph-star'} text-lg"></i>`;
+    }
+
+    function refreshGridPlayingState() {
+      const cards = stationsGrid.querySelectorAll('[data-id]');
+      cards.forEach(card => {
+        const id = card.getAttribute('data-id');
+        const isCurrent = state.currentStation && state.currentStation.id === id;
+        const isPlaying = isCurrent && !audioElement.paused;
+
+        const btn = card.querySelector('.play-card-btn');
+        if (isPlaying) {
+          card.classList.add('border-brand-500', 'bg-brand-500/5');
+          card.classList.remove('border-dark-border');
+          btn.className = 'play-card-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-500 text-black transition';
+          btn.innerHTML = '<i class="ph-fill ph-pause"></i><span>Pausar</span>';
+        } else {
+          card.classList.remove('border-brand-500', 'bg-brand-500/5');
+          card.classList.add('border-dark-border');
+          btn.className = 'play-card-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-bg border border-dark-border text-slate-200 hover:border-brand-500 transition';
+          btn.innerHTML = '<i class="ph-fill ph-play"></i><span>Escuchar</span>';
+        }
+      });
+    }
+
+    // Play / Pause button
+    playBtn.addEventListener('click', () => {
+      if (!state.currentStation && state.filteredStations.length > 0) {
+        playStation(state.filteredStations[0], 0);
+        return;
+      }
+      if (audioElement.paused) {
+        audioElement.play().catch(handlePlayError);
+      } else {
+        audioElement.pause();
+      }
+    });
+
+    nextBtn.addEventListener('click', playNextStation);
+    prevBtn.addEventListener('click', playPrevStation);
+
+    // Audio status events
+    audioElement.addEventListener('playing', () => {
+      playIcon.className = 'ph-fill ph-pause text-xl';
+      playerLiveBadge.classList.remove('hidden');
+      playerStatus.textContent = 'Transmitiendo en vivo';
+      visualizer.classList.remove('opacity-0');
+      visualizer.classList.add('opacity-100');
+      refreshGridPlayingState();
+    });
+
+    audioElement.addEventListener('pause', () => {
+      playIcon.className = 'ph-fill ph-play text-xl ml-0.5';
+      playerLiveBadge.classList.add('hidden');
+      playerStatus.textContent = 'En pausa';
+      visualizer.classList.remove('opacity-100');
+      visualizer.classList.add('opacity-0');
+      refreshGridPlayingState();
+    });
+
+    audioElement.addEventListener('waiting', () => {
+      playerStatus.textContent = 'Almacenando búfer...';
+    });
+
+    audioElement.addEventListener('error', () => {
+      playerStatus.textContent = 'Error: Estación no disponible temporalmente';
+      playerLiveBadge.classList.add('hidden');
+      visualizer.classList.remove('opacity-100');
+      visualizer.classList.add('opacity-0');
+      playIcon.className = 'ph-fill ph-play text-xl ml-0.5';
+    });
+
+    // Volume controls
+    volumeSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      audioElement.volume = val;
+      audioElement.muted = false;
+      updateVolumeIcon(val);
+    });
+
+    muteBtn.addEventListener('click', () => {
+      audioElement.muted = !audioElement.muted;
+      updateVolumeIcon(audioElement.muted ? 0 : audioElement.volume);
+    });
+
+    function updateVolumeIcon(vol) {
+      if (vol === 0 || audioElement.muted) {
+        volumeIcon.className = 'ph-fill ph-speaker-slash text-xl text-rose-400';
+      } else if (vol < 0.5) {
+        volumeIcon.className = 'ph-fill ph-speaker-low text-xl';
+      } else {
+        volumeIcon.className = 'ph-fill ph-speaker-high text-xl';
+      }
+    }
+
+    // Search and Filters
+    searchInput.addEventListener('input', () => {
+      clearSearchBtn.classList.toggle('hidden', !searchInput.value);
+      applyFilters();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearSearchBtn.classList.add('hidden');
+      applyFilters();
+    });
+
+    countryFilter.addEventListener('change', applyFilters);
+    loadMoreBtn.addEventListener('click', renderNextBatch);
+
+    // Toggle Favorites Mode
+    toggleFavoritesBtn.addEventListener('click', () => {
+      state.showOnlyFavorites = !state.showOnlyFavorites;
+      if (state.showOnlyFavorites) {
+        toggleFavoritesBtn.classList.add('bg-amber-400/20', 'border-amber-400', 'text-amber-300');
+      } else {
+        toggleFavoritesBtn.classList.remove('bg-amber-400/20', 'border-amber-400', 'text-amber-300');
+      }
+      applyFilters();
+    });
+
+    playerFavBtn.addEventListener('click', () => {
+      if (state.currentStation) {
+        toggleFavorite(state.currentStation.id);
+      }
+    });
+
+    // Region Selector
+    playlistSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val === '__custom__') {
+        customInputBar.classList.remove('hidden');
+      } else {
+        customInputBar.classList.add('hidden');
+        loadPlaylist(val);
+      }
+    });
+
+    // Custom URL / File loading
+    loadCustomUrlBtn.addEventListener('click', () => {
+      const url = customUrlInput.value.trim();
+      if (url) loadPlaylist(url);
+    });
+
+    localFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        state.allStations = parseM3U8(event.target.result);
+        populateCountryFilter();
+        applyFilters();
+      };
+      reader.readAsText(file);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateFavBadge();
+      // Load default region (América del Sur)
+      loadPlaylist(playlistSelect.value);
+    });
+  </script>
+</body>
+</html>
