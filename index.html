@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radio Global Mercator | Map & Heatmap Player</title>
+  <title>GeoRadio Global | Heatmap Player</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -37,7 +37,8 @@
 
   <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <!-- HLS.js for stream playback -->
+  
+  <!-- HLS.js for Live Stream audio playback -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <!-- Leaflet CSS & JS (Flat Mercator Web EPSG:3857) -->
@@ -53,13 +54,13 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <style>
-    /* Custom Scrollbar */
+    /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #070b12; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
-    /* Equalizer Pulse */
+    /* Equalizer Pulse Animation */
     .eq-bar {
       animation: eqPulse 1.2s ease-in-out infinite alternate;
     }
@@ -74,18 +75,18 @@
       100% { height: 30%; }
     }
 
-    /* Custom Leaflet Map Dark Styling */
+    /* Leaflet Container & Popup Customization */
     .leaflet-container {
-      background-color: #070b12 !important;
+      background: #111827 !important;
       font-family: inherit;
     }
     .leaflet-popup-content-wrapper {
       background: #141d2e !important;
       color: #f1f5f9 !important;
       border: 1px solid #1e293b;
-      border-radius: 14px;
+      border-radius: 12px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-      padding: 4px;
+      padding: 2px;
     }
     .leaflet-popup-tip {
       background: #141d2e !important;
@@ -97,13 +98,14 @@
     .leaflet-popup-close-button:hover {
       color: #ffffff !important;
     }
-    /* MarkerCluster Theme customization */
+
+    /* MarkerCluster Custom Theme */
     .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-      background-color: rgba(16, 185, 129, 0.3) !important;
+      background-color: rgba(16, 185, 129, 0.25) !important;
     }
     .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
       background-color: #10b981 !important;
-      color: #000000 !important;
+      color: #051b14 !important;
       font-weight: 700;
       font-family: monospace;
     }
@@ -127,23 +129,23 @@
         </div>
         <div>
           <h1 class="font-bold text-sm tracking-tight text-white flex items-center gap-2 leading-none">
-            GeoRadio Global
+            GeoRadio 
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-brand-500/10 border border-brand-500/30 text-brand-400 font-medium font-mono">2D MAP</span>
           </h1>
-          <p class="text-[11px] text-slate-400 leading-none mt-0.5">Mapa interactivo con Heatmap y Clúster</p>
+          <p class="text-[11px] text-slate-400 leading-none mt-0.5"> Heatmap y Clúster</p>
         </div>
       </div>
     </div>
 
-    <!-- Quick stats & active layer status -->
+    <!-- Quick stats & active station badge -->
     <div class="flex items-center gap-3">
       <div class="hidden md:flex items-center gap-2 bg-dark-card border border-dark-border px-3 py-1.5 rounded-lg text-xs">
         <span class="flex h-2 w-2 relative">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
         </span>
-        <span class="text-slate-400">Sintonizadas:</span>
-        <span id="activeStationBadge" class="font-semibold text-brand-400">Ninguna</span>
+        <span class="text-slate-400">Sintonizando:</span>
+        <span id="activeStationBadge" class="font-semibold text-brand-400 truncate max-w-[200px]">Ninguna</span>
       </div>
 
       <button id="toggleFavsViewBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-dark-card border border-dark-border text-slate-300 hover:text-amber-400 hover:border-amber-400/40 transition">
@@ -160,10 +162,10 @@
     <!-- Left Control Sidebar -->
     <aside id="sidebar" class="w-80 sm:w-96 bg-dark-surface border-r border-dark-border flex flex-col z-20 transition-all duration-300 ease-in-out shrink-0">
       
-      <!-- Upper Controls Form -->
+      <!-- Controls Form -->
       <div class="p-3.5 border-b border-dark-border space-y-3 shrink-0 bg-dark-surface/50">
         
-        <!-- Region / Playlist Source -->
+        <!-- Region / Playlist Selection (Default: América del Norte) -->
         <div>
           <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
             Región M3U8
@@ -171,8 +173,8 @@
           <div class="relative">
             <i class="ph ph-globe absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 pointer-events-none"></i>
             <select id="playlistSelect" class="w-full bg-dark-card border border-dark-border text-xs rounded-xl pl-8 pr-7 py-2 text-slate-200 focus:outline-none focus:border-brand-500 appearance-none cursor-pointer">
+              <option value="radios_america_del_norte.m3u8" selected>América del Norte (Default)</option>
               <option value="radios_america_del_sur.m3u8">América del Sur</option>
-              <option value="radios_america_del_norte.m3u8">América del Norte</option>
               <option value="radios_europa.m3u8">Europa</option>
               <option value="radios_asia.m3u8">Asia</option>
               <option value="radios_africa.m3u8">África</option>
@@ -193,10 +195,10 @@
           </div>
         </div>
 
-        <!-- Live Search Field -->
+        <!-- Live Search Input -->
         <div class="relative">
           <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-          <input type="text" id="searchInput" placeholder="Buscar por estación o ciudad..." class="w-full bg-dark-card border border-dark-border rounded-xl pl-8 pr-8 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500">
+          <input type="text" id="searchInput" placeholder="Buscar por estación, ciudad o país..." class="w-full bg-dark-card border border-dark-border rounded-xl pl-8 pr-8 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500">
           <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
             <i class="ph ph-x-circle text-sm"></i>
           </button>
@@ -209,7 +211,7 @@
             <select id="genreSelect" class="w-full bg-dark-card border border-dark-border text-xs rounded-xl px-2.5 py-2 text-slate-200 focus:outline-none focus:border-brand-500 appearance-none cursor-pointer pr-6">
               <option value="">Todos los Géneros</option>
               <option value="rock">🎸 Rock / Metal</option>
-              <option value="pop">🎤 Pop / Top Hits</option>
+              <option value="pop">🎤 Pop / Hits</option>
               <option value="electronic">🎧 Electro / Dance</option>
               <option value="chill">☕ Chill / Ambient</option>
               <option value="jazz">🎷 Jazz / Blues</option>
@@ -219,7 +221,7 @@
               <option value="country">🤠 Country</option>
               <option value="hiphop">🧢 Hip Hop / Rap</option>
               <option value="retro">📻 Retro / 80s 90s</option>
-              <option value="news">📰 Noticias / Info</option>
+              <option value="news">📰 Noticias / Talk</option>
               <option value="sports">⚽ Deportes</option>
               <option value="christian">🕊️ Cristiana</option>
             </select>
@@ -235,9 +237,8 @@
           </div>
         </div>
 
-        <!-- Map Layer Toggle & Style Switcher -->
+        <!-- Layer Modes (Heatmap vs Pines) & Free Basemap Selector -->
         <div class="grid grid-cols-2 gap-2 pt-1 border-t border-dark-border/60">
-          <!-- Heatmap vs Pins Toggle -->
           <div class="flex bg-dark-card border border-dark-border rounded-xl p-0.5 text-[11px]">
             <button id="heatModeBtn" class="flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1 font-medium transition text-slate-400 hover:text-white">
               <i class="ph-fill ph-fire text-amber-400"></i> Heatmap
@@ -247,13 +248,13 @@
             </button>
           </div>
 
-          <!-- Base Tile Selector -->
+          <!-- Basemap Options (100% Free - No API Keys) -->
           <div class="relative">
             <select id="tileSelect" class="w-full h-full bg-dark-card border border-dark-border text-[11px] rounded-xl px-2.5 py-1 text-slate-300 focus:outline-none focus:border-brand-500 appearance-none cursor-pointer pr-6">
-              <option value="dark">🌙 Carto Dark Matter</option>
-              <option value="voyager">🗺️ Carto Voyager</option>
+              <option value="esri_dark" selected>🌙 Esri Dark Canvas</option>
+              <option value="esri_sat">🛰️ Esri Satélite</option>
               <option value="osm">🌐 OpenStreetMap</option>
-              <option value="positron">☀️ Carto Positron</option>
+              <option value="esri_topo">🏔️ Esri Topográfico</option>
             </select>
             <i class="ph ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
           </div>
@@ -269,12 +270,12 @@
 
       </div>
 
-      <!-- Station List Items (Virtual/Paged) -->
+      <!-- Station List Items -->
       <div id="stationListContainer" class="flex-1 overflow-y-auto p-2 space-y-1.5">
         <!-- Station items will be appended here dynamically -->
       </div>
 
-      <!-- Loading / Empty Overlay for list -->
+      <!-- Sidebar Loader / Spinner -->
       <div id="sidebarLoader" class="hidden flex-col items-center justify-center py-12 text-center gap-2">
         <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
         <p class="text-xs text-slate-400 font-medium">Cargando emisoras...</p>
@@ -293,7 +294,7 @@
           <span class="font-semibold text-slate-200">Proyección Mercator Web</span>
           <span class="text-slate-400 text-[10px]">Haz zoom para explorar pines individuales</span>
         </div>
-        <button id="resetMapBoundsBtn" class="ml-2 px-2 py-1 bg-dark-card hover:bg-dark-border border border-dark-border rounded-lg text-slate-300 hover:text-white transition" title="Reajustar vista">
+        <button id="resetMapBoundsBtn" class="ml-2 px-2 py-1 bg-dark-card hover:bg-dark-border border border-dark-border rounded-lg text-slate-300 hover:text-white transition" title="Centrar en la región">
           <i class="ph ph-arrows-out-simple"></i>
         </button>
       </div>
@@ -308,6 +309,9 @@
         </button>
         <button data-quick-genre="pop" class="quick-genre-pill px-3 py-1 rounded-full text-xs font-medium bg-dark-card/90 backdrop-blur-md border border-dark-border text-slate-300 shrink-0 hover:border-brand-500 hover:text-white transition">
           🎤 Pop
+        </button>
+        <button data-quick-genre="country" class="quick-genre-pill px-3 py-1 rounded-full text-xs font-medium bg-dark-card/90 backdrop-blur-md border border-dark-border text-slate-300 shrink-0 hover:border-brand-500 hover:text-white transition">
+          🤠 Country
         </button>
         <button data-quick-genre="electronic" class="quick-genre-pill px-3 py-1 rounded-full text-xs font-medium bg-dark-card/90 backdrop-blur-md border border-dark-border text-slate-300 shrink-0 hover:border-brand-500 hover:text-white transition">
           🎧 Electro
@@ -386,8 +390,15 @@
   <audio id="audioElement" preload="none"></audio>
 
   <script>
-    // Geographic Dictionary for global city resolution
+    // Geographic Dictionary for global city and regional centroid resolution
     const GEO_FALLBACK = {
+      // North America & Mexico
+      "Mexico City": [19.4326, -99.1332], "Guadalajara": [20.6597, -103.3496], "Monterrey": [25.6866, -100.3161],
+      "Hermosillo": [29.0729, -110.9559], "Tijuana": [32.5149, -117.0382], "Chihuahua": [28.6353, -106.0889],
+      "New York NY": [40.7128, -74.0060], "Los Angeles CA": [34.0522, -118.2437], "Chicago IL": [41.8781, -87.6298],
+      "Houston TX": [29.7604, -95.3698], "Miami FL": [25.7617, -80.1918], "Toronto": [43.6532, -79.3832],
+      "Montreal": [45.5017, -73.5673], "Vancouver": [49.2827, -123.1207],
+
       // South America
       "Buenos Aires": [-34.6037, -58.3816], "Córdoba": [-31.4201, -64.1888], "Rosario": [-32.9468, -60.6393],
       "Mendoza": [-32.8895, -68.8458], "Santiago": [-33.4489, -70.6693], "São Paulo": [-23.5505, -46.6333],
@@ -396,13 +407,6 @@
       "Lima": [-12.0464, -77.0428], "Cusco": [-13.5319, -71.9675], "Quito": [-0.1807, -78.4678],
       "Guayaquil": [-2.1894, -79.8891], "Caracas": [10.4806, -66.9036], "Montevideo": [-34.9011, -56.1645],
       "Asunción": [-25.2637, -57.5759], "La Paz": [-16.5000, -68.1500], "Santa Cruz": [-17.7833, -63.1821],
-
-      // North America & Mexico
-      "Mexico City": [19.4326, -99.1332], "Guadalajara": [20.6597, -103.3496], "Monterrey": [25.6866, -100.3161],
-      "Hermosillo": [29.0729, -110.9559], "Tijuana": [32.5149, -117.0382], "Chihuahua": [28.6353, -106.0889],
-      "New York NY": [40.7128, -74.0060], "Los Angeles CA": [34.0522, -118.2437], "Chicago IL": [41.8781, -87.6298],
-      "Houston TX": [29.7604, -95.3698], "Miami FL": [25.7617, -80.1918], "Toronto": [43.6532, -79.3832],
-      "Montreal": [45.5017, -73.5673], "Vancouver": [49.2827, -123.1207],
 
       // Europe
       "Madrid": [40.4168, -3.7038], "Barcelona": [41.3851, 2.1734], "Valencia": [39.4699, -0.3763],
@@ -418,11 +422,11 @@
     };
 
     const COUNTRY_CENTROIDS = {
+      "United States": [37.0902, -95.7129], "Mexico": [23.6345, -102.5528], "Canada": [56.1304, -106.3468],
       "Argentina": [-38.4161, -63.6167], "Brazil": [-14.2350, -51.9253], "Chile": [-35.6751, -71.5430],
       "Colombia": [4.5709, -74.2973], "Peru": [-9.1900, -75.0152], "Ecuador": [-1.8312, -78.1834],
       "Venezuela": [6.4238, -66.5897], "Uruguay": [-32.5228, -55.7658], "Paraguay": [-23.4425, -58.4438],
-      "Bolivia": [-16.2902, -63.5887], "Mexico": [23.6345, -102.5528], "United States": [37.0902, -95.7129],
-      "Canada": [56.1304, -106.3468], "Spain": [40.4637, -3.7492], "France": [46.2276, 2.2137],
+      "Bolivia": [-16.2902, -63.5887], "Spain": [40.4637, -3.7492], "France": [46.2276, 2.2137],
       "Germany": [51.1657, 10.4515], "Italy": [41.8719, 12.5674], "United Kingdom": [55.3781, -3.4360],
       "Russia": [61.5240, 105.3188], "Japan": [36.2048, 138.2529], "China": [35.8617, 104.1954],
       "Australia": [-25.2744, 133.7751], "South Africa": [-30.5595, 22.9375]
@@ -441,12 +445,36 @@
       country: ["country", "bluegrass", "folk", "americana"],
       hiphop: ["hip hop", "hiphop", "rap", "trap", "r&b", "urban"],
       retro: ["80s", "90s", "70s", "oldies", "retro", "vintage", "recuerdos"],
-      news: ["news", "noticias", "talk", "info", "informacion", "parole", "radio nacional", "bbc", "npr"],
+      news: ["news", "noticias", "talk", "info", "informacion", "radio nacional", "bbc", "npr"],
       sports: ["sport", "deporte", "deportes", "futbol", "soccer", "espn"],
       christian: ["cristian", "christian", "gospel", "catolica", "jesus", "radio maria"]
     };
 
-    // Application State
+    // Basemap URLs (100% Free - No API Keys - No Watermarks)
+    const BASEMAPS = {
+      esri_dark: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+        maxZoom: 16
+      },
+      esri_sat: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye',
+        maxZoom: 18
+      },
+      osm: {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      },
+      esri_topo: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, USGS',
+        maxZoom: 18
+      }
+    };
+
+    // Global Application State
     const state = {
       allStations: [],
       filteredStations: [],
@@ -459,7 +487,7 @@
       hlsInstance: null
     };
 
-    // DOM References
+    // DOM Elements
     const sidebar = document.getElementById('sidebar');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
     const playlistSelect = document.getElementById('playlistSelect');
@@ -482,7 +510,7 @@
     const activeStationBadge = document.getElementById('activeStationBadge');
     const resetMapBoundsBtn = document.getElementById('resetMapBoundsBtn');
 
-    // Audio & Player DOM
+    // Audio & Player Elements
     const audioElement = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
@@ -497,20 +525,13 @@
     const playerFavBtn = document.getElementById('playerFavBtn');
     const playerVisualizer = document.getElementById('playerVisualizer');
 
-    // Tile Providers (EPSG:3857 Web Mercator)
-    const TILE_LAYERS = {
-      dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      voyager: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      positron: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      osm: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-    };
-
     /**
-     * STREAMING_CHUNK:Setting up Leaflet Mercator map and layers...
+     * STREAMING_CHUNK:Configuring Leaflet map, layers, and coordinate resolvers...
      */
+    // Initialize Map with initial focus on North America [38.5, -98.0]
     const map = L.map('map', {
-      center: [-15.0, -60.0],
-      zoom: 3,
+      center: [38.5, -98.0],
+      zoom: 4,
       minZoom: 2,
       maxZoom: 18,
       worldCopyJump: true,
@@ -519,12 +540,20 @@
 
     L.control.zoom({ position: 'topleft' }).addTo(map);
 
-    // Set initial Dark Matter tile
-    state.currentTileLayer = L.tileLayer(TILE_LAYERS.dark, {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
+    function setBasemap(key) {
+      const cfg = BASEMAPS[key] || BASEMAPS.esri_dark;
+      if (state.currentTileLayer) {
+        map.removeLayer(state.currentTileLayer);
+      }
+      state.currentTileLayer = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        maxZoom: cfg.maxZoom,
+        subdomains: ['a', 'b', 'c']
+      }).addTo(map);
+    }
+
+    // Apply default Esri Dark Canvas
+    setBasemap('esri_dark');
 
     // Marker Cluster & Heatmap Layer Groups
     const markerClusterGroup = L.markerClusterGroup({
@@ -537,9 +566,6 @@
 
     let heatLayer = null;
 
-    /**
-     * Resolves Lat/Lng coordinates for a given city and country
-     */
     function resolveCoordinates(city, country, idSeed) {
       if (GEO_FALLBACK[city]) {
         return GEO_FALLBACK[city];
@@ -551,19 +577,17 @@
       }
       if (COUNTRY_CENTROIDS[country]) {
         const [cLat, cLng] = COUNTRY_CENTROIDS[country];
-        // Jitter coordinate slightly based on ID hash to disperse stations around country center
         let hash = 0;
         for (let i = 0; i < idSeed.length; i++) hash = ((hash << 5) - hash) + idSeed.charCodeAt(i);
         const latOffset = ((Math.abs(hash) % 1000) / 1000 - 0.5) * 3.5;
         const lngOffset = ((Math.abs(hash >> 3) % 1000) / 1000 - 0.5) * 3.5;
         return [cLat + latOffset, cLng + lngOffset];
       }
-      // Global fallback jitter around Greenwich/Equator
-      return [10.0 + (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 40];
+      return [38.5 + (Math.random() - 0.5) * 12, -98.0 + (Math.random() - 0.5) * 20];
     }
 
     /**
-     * STREAMING_CHUNK:Parsing M3U8 content and extracting metadata...
+     * STREAMING_CHUNK:Implementing playlist parser and filter pipeline...
      */
     function parseM3U8(content) {
       const lines = content.split(/\r?\n/);
@@ -653,9 +677,6 @@
       return stations;
     }
 
-    /**
-     * STREAMING_CHUNK:Loading playlist and populating country filters...
-     */
     async function loadPlaylist(fileNameOrUrl) {
       sidebarLoader.classList.remove('hidden');
       stationListContainer.innerHTML = '';
@@ -666,7 +687,6 @@
           response = await fetch(fileNameOrUrl);
           if (!response.ok) throw new Error('Relative fetch failed');
         } catch (e) {
-          // Fallback to GitHub raw
           const rawUrl = `https://raw.githubusercontent.com/SamHithub/radiogarden_mediaplayer/main/${fileNameOrUrl}`;
           response = await fetch(rawUrl);
         }
@@ -677,15 +697,15 @@
 
         totalCountLabel.textContent = state.allStations.length.toLocaleString();
         populateCountries();
-        applyFilters();
+        applyFilters(true); // reset viewport on new playlist
       } catch (err) {
         console.error('Error loading playlist:', err);
         sidebarLoader.classList.add('hidden');
         stationListContainer.innerHTML = `
           <div class="p-4 text-center text-rose-400 text-xs">
             <i class="ph ph-warning-circle text-2xl mb-1"></i>
-            <p class="font-semibold">Error al cargar la lista M3U8</p>
-            <p class="text-[10px] text-slate-400 mt-1">Verifica la URL o conexión al repositorio.</p>
+            <p class="font-semibold">Error al cargar lista</p>
+            <p class="text-[10px] text-slate-400 mt-1">Verifica la conexión al archivo .m3u8</p>
           </div>
         `;
       }
@@ -706,10 +726,7 @@
       });
     }
 
-    /**
-     * STREAMING_CHUNK:Filtering and updating Mercator map layers...
-     */
-    function applyFilters() {
+    function applyFilters(resetBounds = false) {
       const query = searchInput.value.trim().toLowerCase();
       const selectedCountry = countrySelect.value;
       const selectedGenre = genreSelect.value;
@@ -731,17 +748,11 @@
       sidebarLoader.classList.add('hidden');
 
       renderSidebarList();
-      updateMapLayers();
+      updateMapLayers(resetBounds);
     }
 
-    /**
-     * Updates Leaflet Heatmap and MarkerCluster layers based on filtered data
-     */
-    function updateMapLayers() {
-      // Clear current clusters
+    function updateMapLayers(resetBounds = false) {
       markerClusterGroup.clearLayers();
-
-      // Remove heatlayer if present
       if (heatLayer && map.hasLayer(heatLayer)) {
         map.removeLayer(heatLayer);
       }
@@ -749,8 +760,7 @@
       if (state.filteredStations.length === 0) return;
 
       if (state.mapMode === 'heat') {
-        // Prepare heat points [lat, lng, intensity]
-        const heatPoints = state.filteredStations.map(st => [st.lat, st.lng, 0.7]);
+        const heatPoints = state.filteredStations.map(st => [st.lat, st.lng, 0.75]);
         heatLayer = L.heatLayer(heatPoints, {
           radius: 24,
           blur: 18,
@@ -758,7 +768,6 @@
           gradient: { 0.2: '#00f5a0', 0.5: '#10b981', 0.8: '#f59e0b', 1.0: '#ef4444' }
         }).addTo(map);
       } else {
-        // Pins Mode with MarkerCluster
         const customPinIcon = L.divIcon({
           className: 'custom-pin',
           html: `<div class="w-4 h-4 rounded-full bg-brand-500 border-2 border-dark-bg shadow-md shadow-brand-500/50 flex items-center justify-center hover:scale-125 transition-transform"></div>`,
@@ -782,7 +791,7 @@
                 </div>
               </div>
               <div class="flex items-center justify-between pt-1 border-t border-dark-border/60">
-                <span class="text-[9px] px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/20 font-medium">
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/20 font-medium font-mono">
                   ${st.genres[0] ? st.genres[0].toUpperCase() : 'EN VIVO'}
                 </span>
                 <button onclick="window.playStationById('${st.id}')" class="px-2.5 py-1 rounded-md bg-brand-500 hover:bg-brand-400 text-black font-semibold text-[11px] flex items-center gap-1 transition">
@@ -798,21 +807,20 @@
         markerClusterGroup.addLayers(markers);
       }
 
-      // Auto zoom/fit bounds if we have stations
-      if (state.filteredStations.length > 0) {
+      if (resetBounds && state.filteredStations.length > 0) {
         const samplePoints = state.filteredStations.slice(0, 300).map(s => [s.lat, s.lng]);
         try {
-          map.fitBounds(L.latLngBounds(samplePoints), { padding: [50, 50], maxZoom: 8 });
+          map.fitBounds(L.latLngBounds(samplePoints), { padding: [50, 50], maxZoom: 6 });
         } catch (e) {}
       }
     }
 
     /**
-     * STREAMING_CHUNK:Rendering sidebar station list...
+     * STREAMING_CHUNK:Rendering station cards and binding media player controls...
      */
     function renderSidebarList() {
       stationListContainer.innerHTML = '';
-      const displayBatch = state.filteredStations.slice(0, 75); // Render initial fast batch
+      const displayBatch = state.filteredStations.slice(0, 75);
 
       if (displayBatch.length === 0) {
         stationListContainer.innerHTML = `
@@ -873,9 +881,6 @@
       stationListContainer.appendChild(fragment);
     }
 
-    /**
-     * STREAMING_CHUNK:Audio stream player engine (HLS & HTML5)...
-     */
     function playStation(station, index) {
       if (!station || !station.streamUrl) return;
 
@@ -915,7 +920,6 @@
         audioElement.play().catch(handleAudioError);
       }
 
-      // Update Native MediaSession
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: station.title,
@@ -933,7 +937,7 @@
     };
 
     function handleAudioError(err) {
-      console.warn('Audio stream error or autoplay restriction:', err);
+      console.warn('Audio play error:', err);
       playIcon.className = 'ph-fill ph-play text-lg ml-0.5';
     }
 
@@ -955,7 +959,6 @@
       playerFavBtn.innerHTML = `<i class="${isFav ? 'ph-fill ph-star text-amber-400' : 'ph ph-star'} text-base"></i>`;
     }
 
-    // Audio Playback Events
     playBtn.addEventListener('click', () => {
       if (!state.currentStation && state.filteredStations.length > 0) {
         playStation(state.filteredStations[0], 0);
@@ -1004,24 +1007,23 @@
     });
 
     /**
-     * STREAMING_CHUNK:Binding UI controls, map interactions, and startup triggers...
+     * STREAMING_CHUNK:Setting up user interactions and window initialization...
      */
-    // Sidebar toggle for focused map view
     toggleSidebarBtn.addEventListener('click', () => {
       sidebar.classList.toggle('-ml-80');
       sidebar.classList.toggle('sm:-ml-96');
       setTimeout(() => map.invalidateSize(), 310);
     });
 
-    // Reset Map View
     resetMapBoundsBtn.addEventListener('click', () => {
       if (state.filteredStations.length > 0) {
         const sample = state.filteredStations.slice(0, 300).map(s => [s.lat, s.lng]);
-        map.fitBounds(L.latLngBounds(sample), { padding: [50, 50] });
+        map.fitBounds(L.latLngBounds(sample), { padding: [50, 50], maxZoom: 7 });
+      } else {
+        map.setView([38.5, -98.0], 4);
       }
     });
 
-    // Search and Input listeners
     searchInput.addEventListener('input', () => {
       clearSearchBtn.classList.toggle('hidden', !searchInput.value);
       applyFilters();
@@ -1033,10 +1035,9 @@
       applyFilters();
     });
 
-    genreSelect.addEventListener('change', applyFilters);
-    countrySelect.addEventListener('change', applyFilters);
+    genreSelect.addEventListener('change', () => applyFilters());
+    countrySelect.addEventListener('change', () => applyFilters());
 
-    // Quick Genre Ribbon Buttons
     document.querySelectorAll('.quick-genre-pill').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.quick-genre-pill').forEach(b => {
@@ -1048,7 +1049,6 @@
       });
     });
 
-    // Layer Modes (Heatmap vs Pins)
     heatModeBtn.addEventListener('click', () => {
       state.mapMode = 'heat';
       heatModeBtn.className = 'flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1 font-medium transition bg-brand-500 text-black shadow';
@@ -1063,18 +1063,10 @@
       updateMapLayers();
     });
 
-    // Tile Selector
     tileSelect.addEventListener('change', (e) => {
-      const tileKey = e.target.value;
-      if (state.currentTileLayer) map.removeLayer(state.currentTileLayer);
-      state.currentTileLayer = L.tileLayer(TILE_LAYERS[tileKey], {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-      }).addTo(map);
+      setBasemap(e.target.value);
     });
 
-    // Playlist Selector
     playlistSelect.addEventListener('change', (e) => {
       const val = e.target.value;
       if (val === '__custom__') {
@@ -1090,7 +1082,6 @@
       if (url) loadPlaylist(url);
     });
 
-    // Favorites View Switch
     toggleFavsViewBtn.addEventListener('click', () => {
       state.showOnlyFavorites = !state.showOnlyFavorites;
       toggleFavsViewBtn.classList.toggle('border-amber-400', state.showOnlyFavorites);
@@ -1098,9 +1089,9 @@
       applyFilters();
     });
 
-    // Window Init
     window.addEventListener('DOMContentLoaded', () => {
       favsCountPill.textContent = state.favorites.size;
+      // Default: Load America del Norte automatically
       loadPlaylist(playlistSelect.value);
     });
   </script>
