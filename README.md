@@ -96,4 +96,23 @@ En VLC, presiona `Ctrl + N` (**Medio ➔ Abrir ubicación de red...**) y pega cu
 
 ## 📄 Licencia
 
+## ⚖️ Atribución, Derechos de Autor y Descargo de Responsabilidad
+
+### 1. Atribución a Radio Garden
+Este proyecto reconoce y agradece la labor de **[Radio Garden B.V.](https://radio.garden/)** (desarrollado originalmente junto al *Netherlands Institute for Sound and Vision*). 
+- Los identificadores de canal, metadatos espaciales y el catálogo original de estaciones son propiedad intelectual y desarrollo de Radio Garden.
+- Este software no tiene afiliación oficial, patrocinio ni respaldo directo por parte de Radio Garden.
+
+### 2. Derechos de Transmisión de las Emisoras
+- Ni este repositorio ni el reproductor web alojan, retransmiten, duplican ni distribuyen audio o contenido protegido por derechos de autor.
+- Los logotipos, nombres comerciales y transmisiones en vivo son propiedad exclusiva de sus respectivas estaciones de radio y radiodifusores independientes.
+- El archivo `.m3u8` y la aplicación funcionan exclusivamente como un indexador de hipervínculos que redirigen a los flujos de audio públicos emitidos libremente en la web por cada estación.
+
+### 3. Propósito Educativo y No Comercial
+- Este proyecto ha sido creado con fines exclusivamente didácticos, de investigación técnica en cartografía web (Web Mercator / GIS) y de uso personal.
+- No contiene anuncios, pasarelas de pago ni ningún tipo de monetización directa o indirecta.
+
+### 4. Política de Retiro (Takedown / DMCA)
+Si usted es titular de derechos de autor, propietario de una estación de radio o representante de Radio Garden y considera que algún enlace o metadato indexado debe ser retirado o corregido, por favor abra un *Issue* en este repositorio o comuníquese a través de GitHub, y el contenido señalado será removido a la brevedad.
+
 Distribuido bajo licencia [MIT](LICENSE).
